@@ -64,7 +64,7 @@ const t = {
           'Engineered enterprise-grade backend modules with Java, Spring MVC, and Hibernate to support high-traffic production systems.',
           'Led full software development lifecycle — from architecture and design to deployment on Apache Tomcat.',
           'Managed CI/CD pipelines with Maven and conducted code reviews.',
-          'Contributed to frontend development of the flagship Chispawer platform using Ember.js.',
+          'Contributed to frontend development of the flagship Chispawer platform for Palermo S.A. using Ember.js.',
         ],
       },
       {
@@ -81,8 +81,7 @@ const t = {
     ],
 
     skills_title: 'Technical Skills',
-    skills_hint: 'Click any skill to see where you used it',
-    skills_no_match: 'Not mentioned directly in experience',
+    skills_hint: 'Click any skill to see where I used it',
 
     projects_title: 'Featured Projects',
     projects: [
@@ -105,6 +104,12 @@ const t = {
     mention: 'mention',
     mentions: 'mentions',
     clear_filter: 'Clear filter',
+    // floating navigator
+    nav_prev: 'Previous',
+    nav_next: 'Next',
+    nav_of: 'of',
+    nav_in_exp: 'in experience',
+    nav_in_proj: 'in projects',
   },
 
   es: {
@@ -166,7 +171,7 @@ const t = {
           'Desarrollé módulos backend empresariales con Java, Spring MVC e Hibernate para sistemas de producción de alto tráfico.',
           'Lideré el ciclo completo de desarrollo de software — desde la arquitectura y diseño hasta el despliegue en Apache Tomcat.',
           'Administré pipelines de CI/CD con Maven y realicé revisiones de código.',
-          'Contribuí al desarrollo frontend de la plataforma insignia Chispawer usando Ember.js.',
+          'Contribuí al desarrollo frontend de la plataforma insignia Chispawer para Palermo S.A. usando Ember.js.',
         ],
       },
       {
@@ -183,8 +188,7 @@ const t = {
     ],
 
     skills_title: 'Habilidades Técnicas',
-    skills_hint: 'Hacé clic en una habilidad para ver dónde la usaste',
-    skills_no_match: 'No se menciona directamente en la experiencia',
+    skills_hint: 'Haz clic en una habilidad para ver dónde la he usado',
 
     projects_title: 'Proyectos Destacados',
     projects: [
@@ -207,6 +211,11 @@ const t = {
     mention: 'mención',
     mentions: 'menciones',
     clear_filter: 'Quitar filtro',
+    nav_prev: 'Anterior',
+    nav_next: 'Siguiente',
+    nav_of: 'de',
+    nav_in_exp: 'en experiencia',
+    nav_in_proj: 'en proyectos',
   },
 } as const;
 
@@ -250,6 +259,11 @@ const projectMap: Record<string, number[]> = {
   typescript:   [1],
   vite:         [0],
 };
+
+// A single scrollable mention target
+type MentionTarget =
+  | { kind: 'bullet'; expIdx: number; bulletIdx: number; label: string }
+  | { kind: 'project'; projIdx: number; label: string };
 
 // Ordered by category: Frontend → Backend → Databases & Cloud → Tools
 const skillData = [
@@ -297,11 +311,22 @@ const skillData = [
   },
 ];
 
+// Company name lookup for bullet labels
+const companyNames = [
+  'Paraguay Security',
+  'Quality Care',
+  'IDOM',
+  'Tavatech',
+  'Nexoos',
+];
+
 export default function JonathanPortfolio() {
   const [lang, setLang] = useState<Lang>('en');
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [selectedSkill, setSelectedSkill] = useState<string | null>(null);
+  // Index of the currently highlighted mention (0-based)
+  const [mentionIndex, setMentionIndex] = useState(0);
 
   useEffect(() => {
     const saved = localStorage.getItem('portfolio-lang');
@@ -324,10 +349,47 @@ export default function JonathanPortfolio() {
 
   // Escape key clears selection
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setSelectedSkill(null); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setSelectedSkill(null);
+      if (e.key === 'ArrowRight' && selectedSkill) cycleRelative(1);
+      if (e.key === 'ArrowLeft' && selectedSkill) cycleRelative(-1);
+    };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedSkill, mentionIndex]);
+
+  // ── Build ordered mention targets for a skill ──
+  const getMentionTargets = useCallback((skillId: string): MentionTarget[] => {
+    const targets: MentionTarget[] = [];
+    for (const [ei, bi] of skillMap[skillId] ?? []) {
+      targets.push({ kind: 'bullet', expIdx: ei, bulletIdx: bi, label: companyNames[ei] ?? '' });
+    }
+    for (const pi of projectMap[skillId] ?? []) {
+      targets.push({ kind: 'project', projIdx: pi, label: `Project ${pi + 1}` });
+    }
+    return targets;
   }, []);
+
+  // ── Scroll to a specific target ──
+  const scrollToTarget = useCallback((target: MentionTarget) => {
+    const id =
+      target.kind === 'bullet'
+        ? `bullet-${target.expIdx}-${target.bulletIdx}`
+        : `project-${target.projIdx}`;
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, []);
+
+  // ── Cycle by relative offset (+1 / -1) ──
+  const cycleRelative = useCallback((delta: number) => {
+    if (!selectedSkill) return;
+    const targets = getMentionTargets(selectedSkill);
+    if (targets.length === 0) return;
+    const next = (mentionIndex + delta + targets.length) % targets.length;
+    setMentionIndex(next);
+    scrollToTarget(targets[next]);
+  }, [selectedSkill, mentionIndex, getMentionTargets, scrollToTarget]);
 
   const handleNavClick = () => setMenuOpen(false);
   const toggleLang = () =>
@@ -343,33 +405,34 @@ export default function JonathanPortfolio() {
   const handleSkillClick = useCallback((skillId: string) => {
     if (selectedSkill === skillId) {
       setSelectedSkill(null);
+      setMentionIndex(0);
       return;
     }
     setSelectedSkill(skillId);
+    setMentionIndex(0);
 
-    const matches = skillMap[skillId];
-    if (!matches || matches.length === 0) return;
+    const targets = getMentionTargets(skillId);
+    if (targets.length === 0) return;
 
-    // Small timeout so state updates first, then scroll
-    setTimeout(() => {
-      if (matches && matches.length > 0) {
-        const firstMatch = matches[0];
-        const el = document.getElementById(`bullet-${firstMatch[0]}-${firstMatch[1]}`);
-        if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
-      }
-      // Fall back to first project match
-      const projMatches = projectMap[skillId] ?? [];
-      if (projMatches.length > 0) {
-        const el = document.getElementById(`project-${projMatches[0]}`);
-        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-    }, 50);
-  }, [selectedSkill]);
+    setTimeout(() => scrollToTarget(targets[0]), 50);
+  }, [selectedSkill, getMentionTargets, scrollToTarget]);
 
   const isMatchedBullet = (expIdx: number, bulletIdx: number): boolean => {
     if (!selectedSkill) return false;
     const matches = skillMap[selectedSkill] ?? [];
     return matches.some(([ei, bi]) => ei === expIdx && bi === bulletIdx);
+  };
+
+  const isActiveBullet = (expIdx: number, bulletIdx: number): boolean => {
+    if (!selectedSkill) return false;
+    const targets = getMentionTargets(selectedSkill);
+    const current = targets[mentionIndex];
+    return (
+      !!current &&
+      current.kind === 'bullet' &&
+      current.expIdx === expIdx &&
+      current.bulletIdx === bulletIdx
+    );
   };
 
   const isDimmedBullet = (expIdx: number, bulletIdx: number): boolean => {
@@ -386,6 +449,13 @@ export default function JonathanPortfolio() {
     return (projectMap[selectedSkill] ?? []).includes(projIdx);
   };
 
+  const isActiveProject = (projIdx: number): boolean => {
+    if (!selectedSkill) return false;
+    const targets = getMentionTargets(selectedSkill);
+    const current = targets[mentionIndex];
+    return !!current && current.kind === 'project' && current.projIdx === projIdx;
+  };
+
   const isDimmedProject = (projIdx: number): boolean => {
     if (!selectedSkill) return false;
     const projMatches = projectMap[selectedSkill] ?? [];
@@ -394,6 +464,15 @@ export default function JonathanPortfolio() {
 
   const selectedSkillData = selectedSkill ? skillData.find(s => s.id === selectedSkill) : null;
   const selectedMentionCount = selectedSkill ? getMentionCount(selectedSkill) : 0;
+  const activeMentionTargets = selectedSkill ? getMentionTargets(selectedSkill) : [];
+  const currentTarget = activeMentionTargets[mentionIndex];
+
+  // Label for what the current mention is (company name or project name)
+  const currentTargetLabel = currentTarget
+    ? currentTarget.kind === 'bullet'
+      ? currentTarget.label
+      : currentTarget.label
+    : '';
 
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-900">
@@ -521,7 +600,7 @@ export default function JonathanPortfolio() {
                   )}
                 </span>
                 <button
-                  onClick={() => setSelectedSkill(null)}
+                  onClick={() => { setSelectedSkill(null); setMentionIndex(0); }}
                   className="text-zinc-400 hover:text-zinc-700 transition-colors text-xs underline underline-offset-2"
                 >
                   {c.clear_filter}
@@ -543,21 +622,24 @@ export default function JonathanPortfolio() {
                 <ul className="pl-5 sm:pl-6 list-disc space-y-3 sm:space-y-4">
                   {job.points.map((point, bulletIdx) => {
                     const matched = isMatchedBullet(expIdx, bulletIdx);
+                    const active = isActiveBullet(expIdx, bulletIdx);
                     const dimmed = isDimmedBullet(expIdx, bulletIdx);
                     return (
                       <li
                         key={bulletIdx}
                         id={`bullet-${expIdx}-${bulletIdx}`}
                         className={`text-sm sm:text-[17px] leading-relaxed rounded-lg transition-all duration-500 ${
-                          matched
-                            ? 'text-zinc-900 bg-emerald-50 -mx-3 px-3 py-2 border-l-[3px] border-emerald-500 list-none'
+                          active
+                            ? 'text-zinc-900 bg-emerald-100 -mx-3 px-3 py-2 border-l-[3px] border-emerald-600 list-none ring-1 ring-emerald-200'
+                            : matched
+                            ? 'text-zinc-900 bg-emerald-50 -mx-3 px-3 py-2 border-l-[3px] border-emerald-400 list-none opacity-70'
                             : dimmed
                             ? 'text-zinc-400'
                             : 'text-zinc-700'
                         }`}
                       >
-                        {matched && (
-                          <span className="inline-block w-1.5 h-1.5 bg-emerald-500 rounded-full mr-2 mb-0.5 align-middle" />
+                        {(matched || active) && (
+                          <span className={`inline-block w-1.5 h-1.5 rounded-full mr-2 mb-0.5 align-middle transition-colors ${active ? 'bg-emerald-600' : 'bg-emerald-400'}`} />
                         )}
                         {point}
                       </li>
@@ -636,10 +718,7 @@ export default function JonathanPortfolio() {
             })}
           </div>
 
-          {/* No-match notice */}
-          {selectedSkill && selectedMentionCount === 0 && (
-            <p className="text-center text-zinc-400 text-sm mt-8 italic">{c.skills_no_match}</p>
-          )}
+          
         </div>
       </section>
 
@@ -653,8 +732,10 @@ export default function JonathanPortfolio() {
                 key={i}
                 id={`project-${i}`}
                 className={`rounded-3xl p-8 sm:p-12 transition-all duration-500 ${
-                  isMatchedProject(i)
-                    ? 'bg-emerald-50 border-2 border-emerald-400 shadow-md shadow-emerald-100'
+                  isActiveProject(i)
+                    ? 'bg-emerald-100 border-2 border-emerald-500 shadow-md shadow-emerald-100 ring-1 ring-emerald-200'
+                    : isMatchedProject(i)
+                    ? 'bg-emerald-50 border-2 border-emerald-400 shadow-md shadow-emerald-100 opacity-70'
                     : isDimmedProject(i)
                     ? 'bg-white border border-zinc-100 opacity-40'
                     : 'bg-white border border-zinc-100'
@@ -693,6 +774,86 @@ export default function JonathanPortfolio() {
       <footer className="py-12 sm:py-16 text-center text-sm sm:text-base text-zinc-500 bg-zinc-50 border-t border-zinc-100">
         {c.footer}
       </footer>
+
+      {/* ── Floating Mention Navigator ── */}
+      {selectedSkill && selectedMentionCount > 1 && (
+        <div
+          className={`
+            fixed bottom-6 left-1/2 -translate-x-1/2 z-50
+            flex items-center gap-2 sm:gap-3
+            bg-white/95 backdrop-blur-md
+            border border-emerald-200
+            shadow-xl shadow-emerald-100/60
+            rounded-2xl px-3 py-2.5 sm:px-4 sm:py-3
+            transition-all duration-300
+            animate-in fade-in slide-in-from-bottom-4
+          `}
+          role="navigation"
+          aria-label="Cycle through skill mentions"
+        >
+          {/* Skill icon + name */}
+          <div className="flex items-center gap-2 pr-2 sm:pr-3 border-r border-zinc-100">
+            <img
+              src={selectedSkillData?.customSrc || `https://skillicons.dev/icons?i=${selectedSkill}`}
+              alt={selectedSkillData?.name}
+              className="w-5 h-5 sm:w-6 sm:h-6"
+            />
+            <span className="hidden sm:block text-sm font-semibold text-emerald-700 max-w-25 truncate">
+              {selectedSkillData?.name}
+            </span>
+          </div>
+
+          {/* Prev button */}
+          <button
+            onClick={() => cycleRelative(-1)}
+            aria-label={c.nav_prev}
+            className="flex items-center justify-center w-8 h-8 rounded-xl text-zinc-500 hover:text-emerald-600 hover:bg-emerald-50 transition-all"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M10 12L6 8l4-4" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+
+          {/* Counter + location label */}
+          <div className="flex flex-col items-center min-w-13">
+            <span className="text-sm font-bold text-zinc-800 leading-none">
+              {mentionIndex + 1}
+              <span className="text-zinc-400 font-normal mx-0.5">/</span>
+              {selectedMentionCount}
+            </span>
+            {currentTargetLabel && (
+              <span className="text-[10px] text-emerald-600 font-medium mt-0.5 truncate max-w-20">
+                {currentTargetLabel}
+              </span>
+            )}
+          </div>
+
+          {/* Next button */}
+          <button
+            onClick={() => cycleRelative(1)}
+            aria-label={c.nav_next}
+            className="flex items-center justify-center w-8 h-8 rounded-xl text-zinc-500 hover:text-emerald-600 hover:bg-emerald-50 transition-all"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+
+          {/* Divider + dismiss */}
+          <div className="pl-2 sm:pl-3 border-l border-zinc-100">
+            <button
+              onClick={() => { setSelectedSkill(null); setMentionIndex(0); }}
+              aria-label="Clear filter"
+              className="flex items-center justify-center w-7 h-7 rounded-xl text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 transition-all"
+            >
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

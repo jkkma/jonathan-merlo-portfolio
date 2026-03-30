@@ -287,18 +287,34 @@ export default function JonathanPortfolio() {
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold mb-10 sm:mb-12 text-center">
             Featured Projects
           </h2>
-          <div className="bg-white border border-zinc-100 rounded-3xl p-8 sm:p-12">
-            <h3 className="text-2xl sm:text-3xl font-semibold mb-4">Empower School – Thesis Project</h3>
-            <p className="text-zinc-600 mb-8 text-base sm:text-lg">
-              Full-featured modern web application built with Vite, React, Firebase, and Tailwind CSS.
-            </p>
-            <a
-              href="https://github.com/githubbabby/empower-school"
-              target="_blank"
-              className="inline-flex items-center gap-3 bg-emerald-600 hover:bg-emerald-700 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-2xl font-medium transition-colors"
-            >
-              View on GitHub 🔗
-            </a>
+          <div className="space-y-6">
+            <div className="bg-white border border-zinc-100 rounded-3xl p-8 sm:p-12">
+              <h3 className="text-2xl sm:text-3xl font-semibold mb-4">Empower School – Thesis Project</h3>
+              <p className="text-zinc-600 mb-8 text-base sm:text-lg">
+                Full-featured modern web application built with Vite, React, Firebase, and Tailwind CSS.
+              </p>
+              <a
+                href="https://github.com/githubbabby/empower-school"
+                target="_blank"
+                className="inline-flex items-center gap-3 bg-emerald-600 hover:bg-emerald-700 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-2xl font-medium transition-colors"
+              >
+                View on GitHub 🔗
+              </a>
+            </div>
+
+            <div className="bg-white border border-zinc-100 rounded-3xl p-8 sm:p-12">
+              <h3 className="text-2xl sm:text-3xl font-semibold mb-4">Personal Portfolio</h3>
+              <p className="text-zinc-600 mb-8 text-base sm:text-lg">
+                This very website — a responsive portfolio built with Next.js, React, TypeScript, and Tailwind CSS, featuring smooth navigation and a clean, modern design.
+              </p>
+              <a
+                href="https://github.com/jkkma/jonathan-merlo-portfolio"
+                target="_blank"
+                className="inline-flex items-center gap-3 bg-emerald-600 hover:bg-emerald-700 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-2xl font-medium transition-colors"
+              >
+                View on GitHub 🔗
+              </a>
+            </div>
           </div>
         </div>
       </section>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 type Lang = 'en' | 'es';
 
@@ -81,6 +81,8 @@ const t = {
     ],
 
     skills_title: 'Technical Skills',
+    skills_hint: 'Click any skill to see where you used it',
+    skills_no_match: 'Not mentioned directly in experience',
 
     projects_title: 'Featured Projects',
     projects: [
@@ -100,6 +102,9 @@ const t = {
 
     contact_title: "Let's Connect",
     footer: '© 2026 Jonathan Merlo Apuril • Built with Next.js & Tailwind CSS',
+    mention: 'mention',
+    mentions: 'mentions',
+    clear_filter: 'Clear filter',
   },
 
   es: {
@@ -178,6 +183,8 @@ const t = {
     ],
 
     skills_title: 'Habilidades Técnicas',
+    skills_hint: 'Hacé clic en una habilidad para ver dónde la usaste',
+    skills_no_match: 'No se menciona directamente en la experiencia',
 
     projects_title: 'Proyectos Destacados',
     projects: [
@@ -197,29 +204,92 @@ const t = {
 
     contact_title: 'Contacto',
     footer: '© 2026 Jonathan Merlo Apuril • Hecho con Next.js & Tailwind CSS',
+    mention: 'mención',
+    mentions: 'menciones',
+    clear_filter: 'Quitar filtro',
   },
 } as const;
 
+// Map each skill ID → array of [experienceIndex, bulletIndex] pairs
+const skillMap: Record<string, Array<[number, number]>> = {
+  // Paraguay Security
+  nextjs:       [[0, 0]],
+  react:        [[0, 0]],
+  typescript:   [[0, 0]],
+  tailwindcss:  [[0, 0]],
+  supabase:     [[0, 0]],
+  postgresql:   [[0, 1], [2, 0]],
+  // IDOM
+  javascript:   [[2, 0]],
+  html:         [[2, 0]],
+  jquery:       [[2, 0]],
+  bootstrap:    [[2, 0]],
+  php:          [[2, 0]],
+  codeigniter:  [[2, 0]],
+  python:       [[2, 1]],
+  django:       [[2, 1]],
+  // Tavatech
+  java:         [[3, 0]],
+  spring:       [[3, 0]],
+  hibernate:    [[3, 0]],
+  tomcat:       [[3, 1]],
+  maven:        [[3, 2]],
+  ember:        [[3, 3]],
+  // Nexoos
+  rails:        [[4, 0]],
+  ruby:         [[4, 0]],
+  // css, git → no mentions anywhere
+};
+
+// Map each skill ID → array of project indices
+const projectMap: Record<string, number[]> = {
+  react:        [0, 1],
+  firebase:     [0],
+  tailwindcss:  [0, 1],
+  nextjs:       [1],
+  typescript:   [1],
+  vite:         [0],
+};
+
+// Ordered by category: Frontend → Backend → Databases & Cloud → Tools
 const skillData = [
-  { id: 'nextjs', name: 'Next.js' },
-  { id: 'react', name: 'React' },
-  { id: 'typescript', name: 'TypeScript' },
-  { id: 'tailwindcss', name: 'Tailwind CSS' },
-  { id: 'javascript', name: 'JavaScript' },
-  { id: 'html', name: 'HTML5' },
-  { id: 'css', name: 'CSS3' },
-  { id: 'php', name: 'PHP' },
-  { id: 'python', name: 'Python' },
-  { id: 'rails', name: 'Ruby on Rails' },
-  { id: 'java', name: 'Java' },
-  { id: 'postgresql', name: 'PostgreSQL' },
-  { id: 'supabase', name: 'Supabase' },
-  { id: 'firebase', name: 'Firebase' },
-  { id: 'git', name: 'Git' },
-  { id: 'ember', name: 'Ember.js' },
-  { id: 'jquery', name: 'jQuery' },
-  { id: 'bootstrap', name: 'Bootstrap' },
-  { id: 'maven', name: 'Maven' },
+  // ── Frontend ──
+  { id: 'react',        name: 'React' },
+  { id: 'nextjs',       name: 'Next.js' },
+  { id: 'typescript',   name: 'TypeScript' },
+  { id: 'javascript',   name: 'JavaScript' },
+  { id: 'tailwindcss',  name: 'Tailwind CSS' },
+  { id: 'html',         name: 'HTML5' },
+  { id: 'css',          name: 'CSS3' },
+  { id: 'bootstrap',    name: 'Bootstrap' },
+  { id: 'jquery',       name: 'jQuery' },
+  { id: 'ember',        name: 'Ember.js' },
+  { id: 'vite',         name: 'Vite' },
+  // ── Backend ──
+  { id: 'java',         name: 'Java' },
+  { id: 'spring',       name: 'Spring' },
+  {
+    id: 'hibernate',
+    name: 'Hibernate',
+    customSrc: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/hibernate/hibernate-plain.svg',
+  },
+  { id: 'php',          name: 'PHP' },
+  {
+    id: 'codeigniter',
+    name: 'CodeIgniter',
+    customSrc: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/codeigniter/codeigniter-plain.svg',
+  },
+  { id: 'python',       name: 'Python' },
+  { id: 'django',       name: 'Django' },
+  { id: 'ruby',         name: 'Ruby' },
+  { id: 'rails',        name: 'Ruby on Rails' },
+  // ── Databases & Cloud ──
+  { id: 'postgresql',   name: 'PostgreSQL' },
+  { id: 'supabase',     name: 'Supabase' },
+  { id: 'firebase',     name: 'Firebase' },
+  // ── Tools ──
+  { id: 'git',          name: 'Git' },
+  { id: 'maven',        name: 'Maven' },
   {
     id: 'tomcat',
     name: 'Apache Tomcat',
@@ -231,11 +301,11 @@ export default function JonathanPortfolio() {
   const [lang, setLang] = useState<Lang>('en');
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [selectedSkill, setSelectedSkill] = useState<string | null>(null);
 
-  // Sync language from localStorage after hydration
   useEffect(() => {
     const saved = localStorage.getItem('portfolio-lang');
-    if (saved === 'en' || saved === 'es') setLang(saved);
+    if (saved === 'en' || saved === 'es') setLang(saved as Lang);
   }, []);
 
   const c = t[lang];
@@ -247,11 +317,16 @@ export default function JonathanPortfolio() {
   }, []);
 
   useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth >= 768) setMenuOpen(false);
-    };
+    const handleResize = () => { if (window.innerWidth >= 768) setMenuOpen(false); };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Escape key clears selection
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setSelectedSkill(null); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
   }, []);
 
   const handleNavClick = () => setMenuOpen(false);
@@ -265,6 +340,61 @@ export default function JonathanPortfolio() {
   const toggleLabel = lang === 'en' ? 'ES' : 'EN';
   const toggleAriaLabel = lang === 'en' ? 'Switch to Spanish' : 'Cambiar a inglés';
 
+  const handleSkillClick = useCallback((skillId: string) => {
+    if (selectedSkill === skillId) {
+      setSelectedSkill(null);
+      return;
+    }
+    setSelectedSkill(skillId);
+
+    const matches = skillMap[skillId];
+    if (!matches || matches.length === 0) return;
+
+    // Small timeout so state updates first, then scroll
+    setTimeout(() => {
+      if (matches && matches.length > 0) {
+        const firstMatch = matches[0];
+        const el = document.getElementById(`bullet-${firstMatch[0]}-${firstMatch[1]}`);
+        if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
+      }
+      // Fall back to first project match
+      const projMatches = projectMap[skillId] ?? [];
+      if (projMatches.length > 0) {
+        const el = document.getElementById(`project-${projMatches[0]}`);
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 50);
+  }, [selectedSkill]);
+
+  const isMatchedBullet = (expIdx: number, bulletIdx: number): boolean => {
+    if (!selectedSkill) return false;
+    const matches = skillMap[selectedSkill] ?? [];
+    return matches.some(([ei, bi]) => ei === expIdx && bi === bulletIdx);
+  };
+
+  const isDimmedBullet = (expIdx: number, bulletIdx: number): boolean => {
+    if (!selectedSkill) return false;
+    return !isMatchedBullet(expIdx, bulletIdx);
+  };
+
+  const getMentionCount = (skillId: string): number => {
+    return (skillMap[skillId]?.length ?? 0) + (projectMap[skillId]?.length ?? 0);
+  };
+
+  const isMatchedProject = (projIdx: number): boolean => {
+    if (!selectedSkill) return false;
+    return (projectMap[selectedSkill] ?? []).includes(projIdx);
+  };
+
+  const isDimmedProject = (projIdx: number): boolean => {
+    if (!selectedSkill) return false;
+    const projMatches = projectMap[selectedSkill] ?? [];
+    return projMatches.length > 0 && !projMatches.includes(projIdx);
+  };
+
+  const selectedSkillData = selectedSkill ? skillData.find(s => s.id === selectedSkill) : null;
+  const selectedMentionCount = selectedSkill ? getMentionCount(selectedSkill) : 0;
+
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-900">
 
@@ -275,24 +405,16 @@ export default function JonathanPortfolio() {
         }`}
       >
         <div className="max-w-6xl mx-auto px-6 sm:px-8 py-4 sm:py-5 flex justify-between items-center gap-4">
-          {/* Logo / Name */}
           <div className="text-lg sm:text-2xl md:text-3xl font-semibold text-emerald-600 leading-tight shrink-0">
             Jonathan Merlo Apuril
           </div>
 
-          {/* Desktop links + toggle */}
           <div className="hidden md:flex items-center gap-7 text-sm font-medium">
             {c.nav.map((label, i) => (
-              <a
-                key={label}
-                href={`#${c.nav_ids[i]}`}
-                className="hover:text-emerald-600 transition-colors"
-              >
+              <a key={label} href={`#${c.nav_ids[i]}`} className="hover:text-emerald-600 transition-colors">
                 {label}
               </a>
             ))}
-
-            {/* Language pill */}
             <button
               onClick={toggleLang}
               aria-label={toggleAriaLabel}
@@ -303,7 +425,6 @@ export default function JonathanPortfolio() {
             </button>
           </div>
 
-          {/* Mobile: lang toggle + hamburger */}
           <div className="md:hidden flex items-center gap-3">
             <button
               onClick={toggleLang}
@@ -313,38 +434,20 @@ export default function JonathanPortfolio() {
               <span className="text-sm leading-none">🌐</span>
               {toggleLabel}
             </button>
-
             <button
               className="flex flex-col justify-center items-center w-10 h-10 gap-1.5 rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
               onClick={() => setMenuOpen((o) => !o)}
               aria-label={menuOpen ? 'Close menu' : 'Open menu'}
               aria-expanded={menuOpen}
             >
-              <span
-                className={`block h-0.5 w-6 bg-zinc-800 rounded-full transition-all duration-300 origin-center ${
-                  menuOpen ? 'rotate-45 translate-y-2' : ''
-                }`}
-              />
-              <span
-                className={`block h-0.5 w-6 bg-zinc-800 rounded-full transition-all duration-300 ${
-                  menuOpen ? 'opacity-0 scale-x-0' : ''
-                }`}
-              />
-              <span
-                className={`block h-0.5 w-6 bg-zinc-800 rounded-full transition-all duration-300 origin-center ${
-                  menuOpen ? '-rotate-45 -translate-y-2' : ''
-                }`}
-              />
+              <span className={`block h-0.5 w-6 bg-zinc-800 rounded-full transition-all duration-300 origin-center ${menuOpen ? 'rotate-45 translate-y-2' : ''}`} />
+              <span className={`block h-0.5 w-6 bg-zinc-800 rounded-full transition-all duration-300 ${menuOpen ? 'opacity-0 scale-x-0' : ''}`} />
+              <span className={`block h-0.5 w-6 bg-zinc-800 rounded-full transition-all duration-300 origin-center ${menuOpen ? '-rotate-45 -translate-y-2' : ''}`} />
             </button>
           </div>
         </div>
 
-        {/* Mobile dropdown */}
-        <div
-          className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${
-            menuOpen ? 'max-h-80 opacity-100' : 'max-h-0 opacity-0'
-          }`}
-        >
+        <div className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${menuOpen ? 'max-h-80 opacity-100' : 'max-h-0 opacity-0'}`}>
           <div className="border-t border-zinc-100 bg-white px-6 pb-4 flex flex-col gap-1">
             {c.nav.map((label, i) => (
               <a
@@ -369,20 +472,12 @@ export default function JonathanPortfolio() {
           <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-semibold tracking-tight mb-6">
             Jonathan Merlo Apuril
           </h1>
-          <p className="text-lg sm:text-xl md:text-2xl text-zinc-600 max-w-3xl mx-auto">
-            {c.hero_sub}
-          </p>
+          <p className="text-lg sm:text-xl md:text-2xl text-zinc-600 max-w-3xl mx-auto">{c.hero_sub}</p>
           <div className="mt-10 sm:mt-12 flex flex-col sm:flex-row gap-4 justify-center">
-            <a
-              href="#experience"
-              className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 sm:px-10 py-4 rounded-2xl text-base sm:text-lg font-medium transition-colors"
-            >
+            <a href="#experience" className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 sm:px-10 py-4 rounded-2xl text-base sm:text-lg font-medium transition-colors">
               {c.cta_exp}
             </a>
-            <a
-              href="#contact"
-              className="border-2 border-emerald-600 text-emerald-700 hover:bg-emerald-50 px-8 sm:px-10 py-4 rounded-2xl text-base sm:text-lg font-medium transition-colors"
-            >
+            <a href="#contact" className="border-2 border-emerald-600 text-emerald-700 hover:bg-emerald-50 px-8 sm:px-10 py-4 rounded-2xl text-base sm:text-lg font-medium transition-colors">
               {c.cta_contact}
             </a>
           </div>
@@ -392,9 +487,7 @@ export default function JonathanPortfolio() {
       {/* ── About ── */}
       <section id="about" className="py-16 sm:py-24 bg-white">
         <div className="max-w-4xl mx-auto px-6 sm:px-8">
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold mb-8 sm:mb-10 text-center">
-            {c.about_title}
-          </h2>
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold mb-8 sm:mb-10 text-center">{c.about_title}</h2>
           <div className="max-w-3xl mx-auto text-base sm:text-lg text-zinc-700 leading-relaxed">
             {c.about_body.map((para, i) => (
               <span key={i}>
@@ -409,25 +502,67 @@ export default function JonathanPortfolio() {
       {/* ── Experience ── */}
       <section id="experience" className="py-16 sm:py-24 bg-zinc-50">
         <div className="max-w-5xl mx-auto px-6 sm:px-8">
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold mb-12 sm:mb-16 text-center">
-            {c.exp_title}
-          </h2>
+          {/* Header row with active filter pill */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-12 sm:mb-16">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold text-center sm:text-left">{c.exp_title}</h2>
+            {selectedSkill && (
+              <div className="flex items-center gap-2 self-center sm:self-auto">
+                <span className="flex items-center gap-2 bg-emerald-100 text-emerald-800 px-4 py-2 rounded-full text-sm font-medium border border-emerald-200">
+                  <img
+                    src={skillData.find(s => s.id === selectedSkill)?.customSrc || `https://skillicons.dev/icons?i=${selectedSkill}`}
+                    alt=""
+                    className="w-4 h-4"
+                  />
+                  {selectedSkillData?.name}
+                  {selectedMentionCount > 0 && (
+                    <span className="bg-emerald-600 text-white text-xs px-1.5 py-0.5 rounded-full">
+                      {selectedMentionCount}
+                    </span>
+                  )}
+                </span>
+                <button
+                  onClick={() => setSelectedSkill(null)}
+                  className="text-zinc-400 hover:text-zinc-700 transition-colors text-xs underline underline-offset-2"
+                >
+                  {c.clear_filter}
+                </button>
+              </div>
+            )}
+          </div>
+
           <div className="space-y-8 sm:space-y-16">
-            {c.experience.map((job, i) => (
-              <div key={i} className="bg-white border border-zinc-100 rounded-3xl p-6 sm:p-10">
+            {c.experience.map((job, expIdx) => (
+              <div key={expIdx} className="bg-white border border-zinc-100 rounded-3xl p-6 sm:p-10">
                 <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-2 md:gap-4 mb-6 sm:mb-8">
                   <div>
                     <h3 className="text-xl sm:text-2xl font-semibold">{job.role}</h3>
-                    <p className="text-emerald-600 font-medium text-sm sm:text-base">
-                      {job.company} • {job.location}
-                    </p>
+                    <p className="text-emerald-600 font-medium text-sm sm:text-base">{job.company} • {job.location}</p>
                   </div>
                   <p className="text-zinc-500 font-medium text-sm sm:text-base whitespace-nowrap">{job.period}</p>
                 </div>
-                <ul className="pl-5 sm:pl-6 list-disc space-y-3 sm:space-y-4 text-zinc-700 text-sm sm:text-[17px]">
-                  {job.points.map((point, idx) => (
-                    <li key={idx}>{point}</li>
-                  ))}
+                <ul className="pl-5 sm:pl-6 list-disc space-y-3 sm:space-y-4">
+                  {job.points.map((point, bulletIdx) => {
+                    const matched = isMatchedBullet(expIdx, bulletIdx);
+                    const dimmed = isDimmedBullet(expIdx, bulletIdx);
+                    return (
+                      <li
+                        key={bulletIdx}
+                        id={`bullet-${expIdx}-${bulletIdx}`}
+                        className={`text-sm sm:text-[17px] leading-relaxed rounded-lg transition-all duration-500 ${
+                          matched
+                            ? 'text-zinc-900 bg-emerald-50 -mx-3 px-3 py-2 border-l-[3px] border-emerald-500 list-none'
+                            : dimmed
+                            ? 'text-zinc-400'
+                            : 'text-zinc-700'
+                        }`}
+                      >
+                        {matched && (
+                          <span className="inline-block w-1.5 h-1.5 bg-emerald-500 rounded-full mr-2 mb-0.5 align-middle" />
+                        )}
+                        {point}
+                      </li>
+                    );
+                  })}
                 </ul>
               </div>
             ))}
@@ -438,36 +573,93 @@ export default function JonathanPortfolio() {
       {/* ── Skills ── */}
       <section id="skills" className="py-16 sm:py-24 bg-white">
         <div className="max-w-6xl mx-auto px-6 sm:px-8">
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold mb-12 sm:mb-16 text-center">
-            {c.skills_title}
-          </h2>
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold mb-3 text-center">{c.skills_title}</h2>
+          <p className="text-center text-zinc-500 text-sm sm:text-base mb-10 sm:mb-14">
+            {c.skills_hint}
+          </p>
+
           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4 sm:gap-6">
-            {skillData.map((skill) => (
-              <div
-                key={skill.id}
-                className="flex flex-col items-center bg-white border border-zinc-200 hover:border-emerald-300 rounded-2xl sm:rounded-3xl p-4 sm:p-6 transition-all hover:shadow-md"
-              >
-                <img
-                  src={skill.customSrc || `https://skillicons.dev/icons?i=${skill.id}`}
-                  alt={skill.name}
-                  className="w-10 h-10 sm:w-16 sm:h-16 mb-3 sm:mb-4"
-                />
-                <p className="font-medium text-zinc-800 text-center text-xs sm:text-sm">{skill.name}</p>
-              </div>
-            ))}
+            {skillData.map((skill) => {
+              const mentionCount = getMentionCount(skill.id);
+              const isSelected = selectedSkill === skill.id;
+              const hasMentions = mentionCount > 0;
+
+              return (
+                <button
+                  key={skill.id}
+                  onClick={() => handleSkillClick(skill.id)}
+                  aria-pressed={isSelected}
+                  className={`group relative flex flex-col items-center rounded-2xl sm:rounded-3xl p-4 sm:p-6 transition-all duration-200 text-left
+                    ${isSelected
+                      ? 'bg-emerald-50 border-2 border-emerald-500 shadow-md shadow-emerald-100 scale-[1.03]'
+                      : hasMentions
+                      ? 'bg-white border border-zinc-200 hover:border-emerald-300 hover:shadow-md cursor-pointer'
+                      : 'bg-white border border-zinc-200 hover:border-zinc-300 cursor-pointer opacity-75'
+                    }`}
+                >
+                  {/* Mention count badge */}
+                  {hasMentions && (
+                    <span
+                      className={`absolute -top-2 -right-2 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center transition-all duration-200 ${
+                        isSelected ? 'bg-emerald-600' : 'bg-zinc-400 group-hover:bg-emerald-500'
+                      }`}
+                    >
+                      {mentionCount}
+                    </span>
+                  )}
+
+                  <img
+                    src={skill.customSrc || `https://skillicons.dev/icons?i=${skill.id}`}
+                    alt={skill.name}
+                    className={`w-10 h-10 sm:w-16 sm:h-16 mb-3 sm:mb-4 transition-transform duration-200 ${
+                      isSelected ? 'scale-110' : 'group-hover:scale-105'
+                    }`}
+                  />
+                  <p className={`font-medium text-center text-xs sm:text-sm transition-colors duration-200 ${
+                    isSelected ? 'text-emerald-700' : 'text-zinc-800'
+                  }`}>
+                    {skill.name}
+                  </p>
+
+                  {/* Subtle label under skill name */}
+                  {hasMentions ? (
+                    <p className={`text-[10px] sm:text-xs mt-1 transition-colors duration-200 ${
+                      isSelected ? 'text-emerald-600' : 'text-zinc-400 group-hover:text-emerald-500'
+                    }`}>
+                      {mentionCount} {mentionCount === 1 ? c.mention : c.mentions}
+                    </p>
+                  ) : (
+                    <p className="text-[10px] sm:text-xs mt-1 text-zinc-300">—</p>
+                  )}
+                </button>
+              );
+            })}
           </div>
+
+          {/* No-match notice */}
+          {selectedSkill && selectedMentionCount === 0 && (
+            <p className="text-center text-zinc-400 text-sm mt-8 italic">{c.skills_no_match}</p>
+          )}
         </div>
       </section>
 
       {/* ── Projects ── */}
       <section id="projects" className="py-16 sm:py-24 bg-zinc-50">
         <div className="max-w-4xl mx-auto px-6 sm:px-8">
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold mb-10 sm:mb-12 text-center">
-            {c.projects_title}
-          </h2>
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold mb-10 sm:mb-12 text-center">{c.projects_title}</h2>
           <div className="space-y-6">
             {c.projects.map((proj, i) => (
-              <div key={i} className="bg-white border border-zinc-100 rounded-3xl p-8 sm:p-12">
+              <div
+                key={i}
+                id={`project-${i}`}
+                className={`rounded-3xl p-8 sm:p-12 transition-all duration-500 ${
+                  isMatchedProject(i)
+                    ? 'bg-emerald-50 border-2 border-emerald-400 shadow-md shadow-emerald-100'
+                    : isDimmedProject(i)
+                    ? 'bg-white border border-zinc-100 opacity-40'
+                    : 'bg-white border border-zinc-100'
+                }`}
+              >
                 <h3 className="text-2xl sm:text-3xl font-semibold mb-4">{proj.title}</h3>
                 <p className="text-zinc-600 mb-8 text-base sm:text-lg">{proj.desc}</p>
                 <a
@@ -486,21 +678,12 @@ export default function JonathanPortfolio() {
       {/* ── Contact ── */}
       <section id="contact" className="py-16 sm:py-24 bg-white">
         <div className="max-w-2xl mx-auto px-6 sm:px-8 text-center">
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold mb-8 sm:mb-10">
-            {c.contact_title}
-          </h2>
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold mb-8 sm:mb-10">{c.contact_title}</h2>
           <div className="bg-zinc-50 border border-zinc-100 rounded-3xl p-8 sm:p-12 space-y-6 sm:space-y-8 text-left max-w-md mx-auto">
-            <a
-              href="mailto:merlo.a.jonathan@gmail.com"
-              className="flex items-center gap-4 text-base sm:text-xl hover:text-emerald-600 transition-colors break-all sm:break-normal"
-            >
+            <a href="mailto:merlo.a.jonathan@gmail.com" className="flex items-center gap-4 text-base sm:text-xl hover:text-emerald-600 transition-colors break-all sm:break-normal">
               ✉️ merlo.a.jonathan@gmail.com
             </a>
-            <a
-              href="https://www.linkedin.com/in/jonathanmerloapuril/"
-              target="_blank"
-              className="flex items-center gap-4 text-base sm:text-xl hover:text-emerald-600 transition-colors"
-            >
+            <a href="https://www.linkedin.com/in/jonathanmerloapuril/" target="_blank" className="flex items-center gap-4 text-base sm:text-xl hover:text-emerald-600 transition-colors">
               💼 LinkedIn Profile
             </a>
           </div>

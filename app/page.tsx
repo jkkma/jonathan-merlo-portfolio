@@ -51,8 +51,8 @@ const t = {
         period: 'Feb 2019 – Dec 2019',
         location: 'Asunción, Paraguay',
         points: [
-          'Built critical modules for the Expropriation Management System using PHP and CodeIgniter; designed dynamic web forms with JavaScript, jQuery, HTML, and Bootstrap; structured PostgreSQL databases with custom reporting via JasperReports.',
-          'Drove requirements gathering and technical planning for the Document Management System (SGD 2.0); developed reusable Django components and polished frontend interfaces.',
+          'Built critical modules for the Expropriation Management System using PHP and CodeIgniter; designed dynamic web forms with JavaScript, jQuery, HTML, CSS, and Bootstrap; structured PostgreSQL databases with custom reporting via JasperReports.',
+          'Contributed to requirements gathering and technical planning for the Document Management System (SGD 2.0); developed reusable Django components and polished frontend interfaces using HTML and CSS.',
         ],
       },
       {
@@ -64,7 +64,7 @@ const t = {
           'Engineered enterprise-grade backend modules with Java, Spring MVC, and Hibernate to support high-traffic production systems.',
           'Led full software development lifecycle — from architecture and design to deployment on Apache Tomcat.',
           'Managed CI/CD pipelines with Maven and conducted code reviews.',
-          'Contributed to frontend development of the flagship Chispawer platform for Palermo S.A. using Ember.js.',
+          'Contributed to frontend development of the flagship Chispawer platform for Palermo S.A. using Ember.js with custom CSS styling.',
         ],
       },
       {
@@ -88,13 +88,19 @@ const t = {
       {
         title: 'Empower School – Thesis Project',
         desc: 'Full-featured modern web application built with Vite, React, Firebase, and Tailwind CSS.',
-        link: 'https://github.com/githubbabby/empower-school',
+        link: 'https://github.com/jkkma/empower-school',
         cta: 'View on GitHub 🔗',
       },
       {
         title: 'Personal Portfolio',
         desc: 'This very website — a responsive portfolio built with Next.js, React, TypeScript, and Tailwind CSS, featuring smooth navigation and a clean, modern design.',
         link: 'https://github.com/jkkma/jonathan-merlo-portfolio',
+        cta: 'View on GitHub 🔗',
+      },
+      {
+        title: 'Job Board API',
+        desc: 'Full REST API for a job board built with Node.js, Express, Prisma and PostgreSQL. Features: user auth (Employer/Applicant roles), Job CRUD, Applications with status tracking.',
+        link: 'https://github.com/jkkma/job-board-api',
         cta: 'View on GitHub 🔗',
       },
     ],
@@ -158,8 +164,8 @@ const t = {
         period: 'Feb 2019 – Dic 2019',
         location: 'Asunción, Paraguay',
         points: [
-          'Desarrollé módulos críticos para el Sistema de Gestión de Expropiaciones con PHP y CodeIgniter; diseñé formularios web dinámicos con JavaScript, jQuery, HTML y Bootstrap; estructuré bases de datos PostgreSQL con reportes personalizados vía JasperReports.',
-          'Lideré el relevamiento de requisitos y la planificación técnica del Sistema de Gestión Documental (SGD 2.0); desarrollé componentes reutilizables en Django e interfaces frontend pulidas.',
+          'Desarrollé módulos críticos para el Sistema de Gestión de Expropiaciones con PHP y CodeIgniter; diseñé formularios web dinámicos con JavaScript, jQuery, HTML, CSS y Bootstrap; estructuré bases de datos PostgreSQL con reportes personalizados vía JasperReports.',
+          'Contribuí al relevamiento de requisitos y la planificación técnica del Sistema de Gestión Documental (SGD 2.0); desarrollé componentes reutilizables en Django e interfaces frontend pulidas con HTML y CSS.',
         ],
       },
       {
@@ -171,7 +177,7 @@ const t = {
           'Desarrollé módulos backend empresariales con Java, Spring MVC e Hibernate para sistemas de producción de alto tráfico.',
           'Lideré el ciclo completo de desarrollo de software — desde la arquitectura y diseño hasta el despliegue en Apache Tomcat.',
           'Administré pipelines de CI/CD con Maven y realicé revisiones de código.',
-          'Contribuí al desarrollo frontend de la plataforma insignia Chispawer para Palermo S.A. usando Ember.js.',
+          'Contribuí al desarrollo frontend de la plataforma insignia Chispawer para Palermo S.A. usando Ember.js con estilos CSS personalizados.',
         ],
       },
       {
@@ -195,13 +201,19 @@ const t = {
       {
         title: 'Empower School – Proyecto de Tesis',
         desc: 'Aplicación web moderna y completa desarrollada con Vite, React, Firebase y Tailwind CSS.',
-        link: 'https://github.com/githubbabby/empower-school',
+        link: 'https://github.com/jkkma/empower-school',
         cta: 'Ver en GitHub 🔗',
       },
       {
         title: 'Sitio web Personal',
         desc: 'Este mismo sitio web responsive construido con Next.js, React, TypeScript y Tailwind CSS, con navegación fluida y un diseño limpio y moderno.',
         link: 'https://github.com/jkkma/jonathan-merlo-portfolio',
+        cta: 'Ver en GitHub 🔗',
+      },
+      {
+        title: 'Job Board API',
+        desc: 'API REST completa para un tablero de empleos construida con Node.js, Express, Prisma y PostgreSQL. Funcionalidades: autenticación de usuarios (roles Empleador/Postulante), CRUD de empleos, postulaciones con seguimiento de estado.',
+        link: 'https://github.com/jkkma/job-board-api',
         cta: 'Ver en GitHub 🔗',
       },
     ],
@@ -221,33 +233,29 @@ const t = {
 
 // Map each skill ID → array of [experienceIndex, bulletIndex] pairs
 const skillMap: Record<string, Array<[number, number]>> = {
-  // Paraguay Security
   nextjs:       [[0, 0]],
   react:        [[0, 0]],
   typescript:   [[0, 0]],
   tailwindcss:  [[0, 0]],
   supabase:     [[0, 0]],
   postgresql:   [[0, 1], [2, 0]],
-  // IDOM
   javascript:   [[2, 0]],
-  html:         [[2, 0]],
+  html:         [[2, 0], [2, 1]],
+  css:          [[2, 0], [2, 1], [3, 3]], 
   jquery:       [[2, 0]],
   bootstrap:    [[2, 0]],
   php:          [[2, 0]],
   codeigniter:  [[2, 0]],
   python:       [[2, 1]],
   django:       [[2, 1]],
-  // Tavatech
   java:         [[3, 0]],
   spring:       [[3, 0]],
   hibernate:    [[3, 0]],
   tomcat:       [[3, 1]],
   maven:        [[3, 2]],
   ember:        [[3, 3]],
-  // Nexoos
   rails:        [[4, 0]],
   ruby:         [[4, 0]],
-  // css, git → no mentions anywhere
 };
 
 // Map each skill ID → array of project indices
@@ -258,6 +266,11 @@ const projectMap: Record<string, number[]> = {
   nextjs:       [1],
   typescript:   [1],
   vite:         [0],
+  // Job Board API
+  nodejs:       [2],
+  express:      [2],
+  prisma:       [2],
+  postgresql:   [2],
 };
 
 // A single scrollable mention target
@@ -265,21 +278,27 @@ type MentionTarget =
   | { kind: 'bullet'; expIdx: number; bulletIdx: number; label: string }
   | { kind: 'project'; projIdx: number; label: string };
 
-// Ordered by category: Frontend → Backend → Databases & Cloud → Tools
 const skillData = [
-  // ── Frontend ──
-  { id: 'react',        name: 'React' },
   { id: 'nextjs',       name: 'Next.js' },
+  { id: 'react',        name: 'React' },
   { id: 'typescript',   name: 'TypeScript' },
-  { id: 'javascript',   name: 'JavaScript' },
   { id: 'tailwindcss',  name: 'Tailwind CSS' },
+  { id: 'nodejs',       name: 'Node.js' },
+  {
+    id: 'prisma',
+    name: 'Prisma',
+    customSrc: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/prisma/prisma-original.svg',
+  },
+  { id: 'supabase',     name: 'Supabase' },
+  { id: 'postgresql',   name: 'PostgreSQL' },
+  { id: 'vite',         name: 'Vite' },
+  { id: 'javascript',   name: 'JavaScript' },
   { id: 'html',         name: 'HTML5' },
   { id: 'css',          name: 'CSS3' },
-  { id: 'bootstrap',    name: 'Bootstrap' },
-  { id: 'jquery',       name: 'jQuery' },
-  { id: 'ember',        name: 'Ember.js' },
-  { id: 'vite',         name: 'Vite' },
-  // ── Backend ──
+  { id: 'express',      name: 'Express' },
+  { id: 'firebase',     name: 'Firebase' },
+  { id: 'python',       name: 'Python' },
+  { id: 'django',       name: 'Django' },
   { id: 'java',         name: 'Java' },
   { id: 'spring',       name: 'Spring' },
   {
@@ -293,15 +312,11 @@ const skillData = [
     name: 'CodeIgniter',
     customSrc: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/codeigniter/codeigniter-plain.svg',
   },
-  { id: 'python',       name: 'Python' },
-  { id: 'django',       name: 'Django' },
   { id: 'ruby',         name: 'Ruby' },
   { id: 'rails',        name: 'Ruby on Rails' },
-  // ── Databases & Cloud ──
-  { id: 'postgresql',   name: 'PostgreSQL' },
-  { id: 'supabase',     name: 'Supabase' },
-  { id: 'firebase',     name: 'Firebase' },
-  // ── Tools ──
+  { id: 'bootstrap',    name: 'Bootstrap' },
+  { id: 'jquery',       name: 'jQuery' },
+  { id: 'ember',        name: 'Ember.js' },
   { id: 'git',          name: 'Git' },
   { id: 'maven',        name: 'Maven' },
   {

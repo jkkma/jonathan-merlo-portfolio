@@ -99,7 +99,7 @@ const t = {
       },
       {
         title: 'Job Board API',
-        desc: 'Full REST API for a job board built with Node.js, Express, Prisma and PostgreSQL. Features: user auth (Employer/Applicant roles), Job CRUD, Applications with status tracking.',
+        desc: 'Full REST API for a job board built with Node.js, Express, Prisma and PostgreSQL. Features: user auth (Employer/Applicant roles), data validation using Zod, Job CRUD, Applications with status tracking.',
         link: 'https://github.com/jkkma/job-board-api',
         cta: 'View on GitHub 🔗',
       },
@@ -212,7 +212,7 @@ const t = {
       },
       {
         title: 'Job Board API',
-        desc: 'API REST completa para un tablero de empleos construida con Node.js, Express, Prisma y PostgreSQL. Funcionalidades: autenticación de usuarios (roles Empleador/Postulante), CRUD de empleos, postulaciones con seguimiento de estado.',
+        desc: 'API REST completa para un tablero de empleos construida con Node.js, Express, Prisma y PostgreSQL. Funcionalidades: autenticación de usuarios (roles Empleador/Postulante), validación de datos utilizando Zod, CRUD de empleos, postulaciones con seguimiento de estado.',
         link: 'https://github.com/jkkma/job-board-api',
         cta: 'Ver en GitHub 🔗',
       },

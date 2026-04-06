@@ -3,3 +3,30 @@
 body {
   font-family: system-ui, sans-serif;
 }
+
+@layer components {
+  .hero-name-wrapper {
+    position: relative;
+  }
+
+  .hero-name-wrapper .invisible-full {
+    visibility: hidden;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  .hero-name-wrapper .typed-overlay {
+    position: absolute;
+    inset: 0;
+    text-align: center;
+  }
+
+  .hero-name-wrapper .cursor {
+    display: inline-block;
+    width: 0.5ch;
+    height: 0.85em;
+    background-color: currentColor;
+    margin-bottom: 0.15em;
+    vertical-align: center;
+  }
+}

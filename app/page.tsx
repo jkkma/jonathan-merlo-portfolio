@@ -34,17 +34,7 @@ const t = {
           'Collaborated with cross-functional teams to deliver features on time and to exact specifications.',
         ],
       },
-      {
-        role: 'IT Support Specialist',
-        company: 'Quality Care Medical Center',
-        period: 'May 2021 – Jul 2021',
-        location: 'San Bernardino, CA',
-        points: [
-          'Automated repetitive data entry processes and developed simple, user-friendly guides for non-technical staff, streamlining daily operations.',
-          'Resolved software and hardware issues in person and remotely.',
-          'Maintained and monitored daily IT operations.',
-        ],
-      },
+      
       {
         role: 'IT Consultant',
         company: 'IDOM Consulting',
@@ -147,17 +137,7 @@ const t = {
           'Colaboré con equipos multidisciplinarios para entregar funcionalidades en tiempo y forma según especificaciones.',
         ],
       },
-      {
-        role: 'Especialista en Soporte IT',
-        company: 'Quality Care Medical Center',
-        period: 'May 2021 – Jul 2021',
-        location: 'San Bernardino, CA',
-        points: [
-          'Automaticé procesos repetitivos de ingreso de datos y desarrollé guías sencillas para personal no técnico, optimizando las operaciones diarias.',
-          'Resolví problemas de software y hardware de forma presencial y remota.',
-          'Mantuve y monitoreé las operaciones de IT diarias.',
-        ],
-      },
+      
       {
         role: 'Consultor IT',
         company: 'IDOM Consulting',
@@ -329,7 +309,6 @@ const skillData = [
 // Company name lookup for bullet labels
 const companyNames = [
   'Paraguay Security',
-  'Quality Care',
   'IDOM',
   'Tavatech',
   'Nexoos',
@@ -343,6 +322,12 @@ export default function JonathanPortfolio() {
   // Index of the currently highlighted mention (0-based)
   const [mentionIndex, setMentionIndex] = useState(0);
 
+  // Typing effect state
+  const FULL_NAME = 'Jonathan Karl Kleber Merlo Apuril';
+  const [typedName, setTypedName] = useState('');
+  const [cursorVisible, setCursorVisible] = useState(true);
+  const [doneTyping, setDoneTyping] = useState(false);
+
   useEffect(() => {
     const saved = localStorage.getItem('portfolio-lang');
     if (saved === 'en' || saved === 'es') setLang(saved as Lang);
@@ -355,6 +340,33 @@ export default function JonathanPortfolio() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Typing effect: type name after a short initial delay
+  useEffect(() => {
+    let i = 0;
+    // Start blinking immediately
+    const blink = setInterval(() => setCursorVisible((v) => !v), 530);
+
+    const startDelay = setTimeout(() => {
+      // Stop blinking, keep cursor solid while typing
+      clearInterval(blink);
+      setCursorVisible(true);
+      const interval = setInterval(() => {
+        i++;
+        setTypedName(FULL_NAME.slice(0, i));
+        if (i >= FULL_NAME.length) { clearInterval(interval); setDoneTyping(true); }
+      }, 80);
+      return () => clearInterval(interval);
+    }, 1800);
+    return () => { clearTimeout(startDelay); clearInterval(blink); };
+  }, []);
+
+  // Blinking cursor — only after typing is done
+  useEffect(() => {
+    if (!doneTyping) return;
+    const blink = setInterval(() => setCursorVisible((v) => !v), 530);
+    return () => clearInterval(blink);
+  }, [doneTyping]);
 
   useEffect(() => {
     const handleResize = () => { if (window.innerWidth >= 768) setMenuOpen(false); };
@@ -563,9 +575,22 @@ export default function JonathanPortfolio() {
           <div className="inline-block bg-emerald-100 text-emerald-700 px-5 py-2 rounded-full text-sm mb-6">
             {c.badge}
           </div>
-          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-semibold tracking-tight mb-6">
-            Jonathan Merlo Apuril
-          </h1>
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold tracking-tight mb-6 text-center hero-name-wrapper">
+  {/* Invisible full name – reserves exact space + line breaks */}
+  <span className="invisible-full" aria-hidden="true">
+    {FULL_NAME}
+    <span className="cursor" /> {/* this reserves the cursor width on wrap */}
+  </span>
+
+  {/* Visible typed text + cursor – now 100% CSS powered */}
+  <span className="typed-overlay">
+    <span>{typedName}</span>
+    <span
+      className="cursor"
+      style={{ opacity: cursorVisible ? 1 : 0, transition: 'opacity 0.1s' }}
+    />
+  </span>
+</h1>
           <p className="text-lg sm:text-xl md:text-2xl text-zinc-600 max-w-3xl mx-auto">{c.hero_sub}</p>
           <div className="mt-10 sm:mt-12 flex flex-col sm:flex-row gap-4 justify-center">
             <a href="#experience" className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 sm:px-10 py-4 rounded-2xl text-base sm:text-lg font-medium transition-colors">

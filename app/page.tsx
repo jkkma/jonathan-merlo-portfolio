@@ -211,49 +211,44 @@ const t = {
   },
 } as const;
 
-// Map each skill ID → array of [experienceIndex, bulletIndex] pairs
-const skillMap: Record<string, Array<[number, number]>> = {
-  nextjs:       [[0, 0]],
-  react:        [[0, 0]],
-  typescript:   [[0, 0]],
-  tailwindcss:  [[0, 0]],
-  supabase:     [[0, 0]],
-  postgresql:   [[0, 1], [2, 0]],
-  javascript:   [[2, 0]],
-  html:         [[2, 0], [2, 1]],
-  css:          [[2, 0], [2, 1], [3, 3]], 
-  jquery:       [[2, 0]],
-  bootstrap:    [[2, 0]],
-  php:          [[2, 0]],
-  codeigniter:  [[2, 0]],
-  python:       [[2, 1]],
-  django:       [[2, 1]],
-  java:         [[3, 0]],
-  spring:       [[3, 0]],
-  hibernate:    [[3, 0]],
-  tomcat:       [[3, 1]],
-  maven:        [[3, 2]],
-  ember:        [[3, 3]],
-  rails:        [[4, 0]],
-  ruby:         [[4, 0]],
-};
+// ── Dynamic mention-map builder
+function buildMentionMaps(
+  skills: Array<{ id: string; name: string; aliases?: string[] }>,
+  experience: (typeof t.en.experience),
+  projects:   (typeof t.en.projects),
+): {
+  skillMap:   Record<string, Array<[number, number]>>;
+  projectMap: Record<string, number[]>;
+} {
+  const skillMap:   Record<string, Array<[number, number]>> = {};
+  const projectMap: Record<string, number[]>               = {};
 
-// Map each skill ID → array of project indices
-const projectMap: Record<string, number[]> = {
-  react:        [0, 1],
-  firebase:     [0],
-  tailwindcss:  [0, 1],
-  nextjs:       [1],
-  typescript:   [1],
-  vite:         [0],
-  // Job Board API
-  nodejs:       [2],
-  express:      [2],
-  prisma:       [2],
-  postgresql:   [2],
-};
+  for (const skill of skills) {
+    const terms = [skill.name, ...(skill.aliases ?? [])];
 
-// A single scrollable mention target
+    const pattern = terms
+      .map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+      .join('|');
+    const regex = new RegExp(`\\b(?:${pattern})\\b`, 'i');
+
+    experience.forEach((job, ei) => {
+      job.points.forEach((point, bi) => {
+        if (regex.test(point)) {
+          (skillMap[skill.id] ??= []).push([ei, bi]);
+        }
+      });
+    });
+
+    projects.forEach((proj, pi) => {
+      if (regex.test(proj.desc)) {
+        (projectMap[skill.id] ??= []).push(pi);
+      }
+    });
+  }
+
+  return { skillMap, projectMap };
+}
+
 type MentionTarget =
   | { kind: 'bullet'; expIdx: number; bulletIdx: number; label: string }
   | { kind: 'project'; projIdx: number; label: string };
@@ -273,8 +268,8 @@ const skillData = [
   { id: 'postgresql',   name: 'PostgreSQL' },
   { id: 'vite',         name: 'Vite' },
   { id: 'javascript',   name: 'JavaScript' },
-  { id: 'html',         name: 'HTML5' },
-  { id: 'css',          name: 'CSS3' },
+  { id: 'html',         name: 'HTML5',  aliases: ['HTML'] },
+  { id: 'css',          name: 'CSS3',   aliases: ['CSS'] },
   { id: 'express',      name: 'Express' },
   { id: 'firebase',     name: 'Firebase' },
   { id: 'python',       name: 'Python' },
@@ -293,7 +288,7 @@ const skillData = [
     customSrc: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/codeigniter/codeigniter-plain.svg',
   },
   { id: 'ruby',         name: 'Ruby' },
-  { id: 'rails',        name: 'Ruby on Rails' },
+  { id: 'rails',        name: 'Ruby on Rails', aliases: ['Rails'] },
   { id: 'bootstrap',    name: 'Bootstrap' },
   { id: 'jquery',       name: 'jQuery' },
   { id: 'ember',        name: 'Ember.js' },
@@ -302,11 +297,13 @@ const skillData = [
   {
     id: 'tomcat',
     name: 'Apache Tomcat',
+    aliases: ['Tomcat'],
     customSrc: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/tomcat/tomcat-original.svg',
   },
 ];
 
-// Company name lookup for bullet labels
+const { skillMap, projectMap } = buildMentionMaps(skillData, t.en.experience, t.en.projects);
+
 const companyNames = [
   'Paraguay Security',
   'IDOM',
